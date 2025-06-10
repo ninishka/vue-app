@@ -6,7 +6,10 @@
     </form>
     <ul class="todo-list">
       <li v-for="(todo) in todos" :key="todo.id" class="todo-item">
-        {{ todo.name }}
+        <span v-if="!isEditing || editedTodoId !== todo.id">{{ todo.name }}</span>
+        <input v-else v-model="editedTodo" />
+        <button @click="startEditing(todo.id, todo.name)">Edit</button>
+        <button v-if="isEditing && editedTodoId === todo.id" @click="editTodo(todo.id)">Save</button>
         <button @click="deleteTodo(todo.id)" class="delete-button">Delete</button>
       </li>
     </ul>
@@ -18,10 +21,18 @@ export default {
   data() {
     return {
       newTodo: '',
-      todos: []
+      todos: [],
+      isEditing: false,
+      editedTodo: '',
+      editedTodoId: null
     }
   },
   methods: {
+    startEditing(id, name) {
+      this.isEditing = true;
+      this.editedTodo = name;
+      this.editedTodoId = id;
+    },
     async fetchTodos() {
       try {
         const response = await fetch('http://localhost:3000/todos');
@@ -30,6 +41,7 @@ export default {
         console.error('Error fetching todos:', error);
       }
     },
+
     async addTodo() {
       try {
         const response = await fetch('http://localhost:3000/todos', {
@@ -44,6 +56,7 @@ export default {
         console.error('Error adding todo:', error);
       }
     },
+
     async deleteTodo(id) {
       try {
         await fetch(`http://localhost:3000/todos/${id}`, {
@@ -53,8 +66,39 @@ export default {
       } catch (error) {
         console.error('Error deleting todo:', error);
       }
+    },
+
+    async editTodo(id) {
+      try {
+        console.log('here0')
+
+        await fetch(`http://localhost:3000/todos/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: this.editedTodo })
+        });
+
+        console.log('here1')
+
+        // Update the local todo list
+        const todoIndex = this.todos.findIndex(todo => todo.id === id);
+        if (todoIndex !== -1) {
+          this.todos[todoIndex].name = this.editedTodo;
+        }
+
+        console.log('here2')
+
+        // Reset editing state
+        this.isEditing = false;
+        this.editedTodo = '';
+        this.editedTodoId = null;
+        console.log('here3')
+      } catch (error) {
+        console.error('Error editing todo:', error);
+      }
     }
   },
+
   mounted() {
     this.fetchTodos();
   }
