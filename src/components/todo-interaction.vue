@@ -1,104 +1,92 @@
 <template>
   <div class="todo-container">
-    <form @submit.prevent="addTodo" class="todo-form">
-      <input v-model="newTodo" placeholder="Add Todo" class="todo-input" />
-      <button type="submit" class="todo-button">Submit</button>
-    </form>
-    <ul class="todo-list">
-      <li v-for="(todo) in todos" :key="todo.id" class="todo-item">
-        <span v-if="!isEditing || editedTodoId !== todo.id">{{ todo.name }}</span>
-        <input v-else v-model="editedTodo" />
-        <button @click="startEditing(todo.id, todo.name)">Edit</button>
-        <button v-if="isEditing && editedTodoId === todo.id" @click="editTodo(todo.id)">Save</button>
-        <button @click="deleteTodo(todo.id)" class="delete-button">Delete</button>
-      </li>
-    </ul>
+    <h1 class="todo-title">Tasks</h1>
+    <div class="todo-content">
+      <TodoForm @add-todo="addTodo" />
+      <TodoList 
+        :todos="todos"
+        @edit-todo="editTodo"
+        @delete-todo="deleteTodo"
+      />
+    </div>
   </div>
 </template>
 
 <script>
+import TodoForm from './todo-form.vue'
+import TodoList from './todo-list.vue'
+
 export default {
+  components: {
+    TodoForm,
+    TodoList
+  },
   data() {
     return {
-      newTodo: '',
-      todos: [],
-      isEditing: false,
-      editedTodo: '',
-      editedTodoId: null
+      todos: []
     }
   },
   methods: {
-    startEditing(id, name) {
-      this.isEditing = true;
-      this.editedTodo = name;
-      this.editedTodoId = id;
-    },
-    async fetchTodos() {
+    async fetchTodos() { //Declares an asynchronous method
       try {
-        const response = await fetch('http://localhost:3000/todos');
-        this.todos = await response.json();
+        const response = await fetch('http://localhost:3000/todos');//Makes a GET request to backend at /todos
+        //tells JavaScript to wait until it gets a response.
+        //The result is saved into response.
+        this.todos = await response.json();//Waits for the response body to be converted from -
+        // -JSON text to a JavaScript object (an array of todos). Then assigns that array to this.todos.
       } catch (error) {
-        console.error('Error fetching todos:', error);
+        console.error('Error:', error);
       }
     },
-
-    async addTodo() {
+    async addTodo(formData) {
       try {
-        const response = await fetch('http://localhost:3000/todos', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: this.newTodo })
+        console.log('formData', formData)
+        const response = await fetch('http://localhost:3000/todo', {
+          method: 'POST',//Sets the HTTP method to POST (to create a new resource).
+           // // headers: { 'Content-Type': 'application/json' },// No Content-Type header is added here, 
+            // because the browser sets it automatically when sending FormData.
+          body: formData
+         //Sends the actual form data — this can include text and a file.
         });
-        const newTodo = await response.json();
-        this.todos.push(newTodo);
-        this.newTodo = '';
+        const result = await response.json();//Waits for the backend to respond with JSON — probably the created todo with its ID and maybe image URL.
+        //Assigns that to the result.
+        this.todos.push(result);//Adds the new todo to the local todos array — immediately updates the UI.
       } catch (error) {
-        console.error('Error adding todo:', error);
+        console.error('Error:', error);
       }
     },
-
+    async editTodo({ id, newName }) { // Uses object destructuring to pull out id and newName from the argument.
+      try {
+        const response = await fetch(`http://localhost:3000/todo/${id}`, { //Sends a PUT request to /todo/{id} — updating a specific todo by its ID.
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },// Sets header to indicate we're sending JSON, not FormData.
+          body: JSON.stringify({ data: newName }) //Converts an object { data: newName } to a JSON string to send as the body.
+        });
+        
+        const updatedTodo = await response.json();
+        const index = this.todos.findIndex(t => t.id === id);
+        //"Only update the todo if it actually exists in the array."
+        if (index !== -1) {//This checks:Did findIndex() actually find the item?
+          //If it did, the index will be 0, 1, 2, etc.
+         //If it didn't, the index will be -1.
+          this.todos[index] = updatedTodo;
+          //replaces the old todo object in the array with the new one returned from the backend.
+        }
+      } catch (error) {
+        console.error('Error editing todo:', error);
+      }
+    },
     async deleteTodo(id) {
       try {
-        await fetch(`http://localhost:3000/todos/${id}`, {
+        await fetch(`http://localhost:3000/todo/${id}`, {
           method: 'DELETE'
         });
         this.todos = this.todos.filter(todo => todo.id !== id);
       } catch (error) {
-        console.error('Error deleting todo:', error);
-      }
-    },
-
-    async editTodo(id) {
-      try {
-        console.log('here0')
-
-        await fetch(`http://localhost:3000/todos/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: this.editedTodo })
-        });
-
-        console.log('here1')
-
-        // Update the local todo list
-        const todoIndex = this.todos.findIndex(todo => todo.id === id);
-        if (todoIndex !== -1) {
-          this.todos[todoIndex].name = this.editedTodo;
-        }
-
-        console.log('here2')
-
-        // Reset editing state
-        this.isEditing = false;
-        this.editedTodo = '';
-        this.editedTodoId = null;
-        console.log('here3')
-      } catch (error) {
-        console.error('Error editing todo:', error);
+        console.error('Error:', error);
       }
     }
   },
-
   mounted() {
     this.fetchTodos();
   }
@@ -107,64 +95,61 @@ export default {
 
 <style scoped>
 .todo-container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: 0px 172px;
+  padding: 2rem;
+  background: #1a1a1a;
+  border-radius: 30px;
+  box-shadow: 0 8px 32px rgba(76, 175, 80, 0.2);
+  border: 2px solid #2d5a27;
+  position: relative;
+  overflow: hidden;
 }
 
-.todo-form {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
+.todo-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at top left, #2d5a2722, transparent 70%),
+              radial-gradient(circle at bottom right, #4a782722, transparent 70%);
+  pointer-events: none;
 }
 
-.todo-input {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  margin-right: 10px;
+.todo-title {
+  color: #4CAF50;
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 3px;
+  position: relative;
 }
 
-.todo-button {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+.todo-content {
+  background: #212121;
+  padding: 2rem;
+  border-radius: 20px;
+  border: 1px solid #2d5a27;
+  position: relative;
+  z-index: 1;
 }
 
-.todo-button:hover {
-  background-color: #0056b3;
-}
+@media (max-width: 768px) {
+  .todo-container {
+    margin: 1rem;
+    padding: 1rem;
+  }
 
-.todo-list {
-  list-style: none;
-  padding: 0;
-}
+  .todo-title {
+    font-size: 2.5rem;
+  }
 
-.todo-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-.delete-button {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.delete-button:hover {
-  background-color: #c82333;
+  .todo-content {
+    padding: 1rem;
+  }
 }
 </style>

@@ -1,41 +1,56 @@
 <template>
-    <ButtonChangeText/>
-    <DirectivesBinding/>
-    <!-- <FormConnect/> -->
-    <TodoInteraction/>
-  <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
-  
+  <div class="container">
+    <div class="left-column">
+      <ButtonChangeText />
+      <DirectivesBinding />
+    </div>
+    <TodoInteraction />
+  </div>
 </template>
 
 <script>
-// import HelloWorld from './components/HelloWorld.vue'
 import ButtonChangeText from './components/button-change-text.vue'
 import DirectivesBinding from './components/directives-binding.vue'
-// import FormConnect from './components/form-connect.vue'
 import TodoInteraction from './components/todo-interaction.vue'
-
-
 
 export default {
   name: 'App',
   components: {
-    // HelloWorld,
     ButtonChangeText,
     DirectivesBinding,
-    // FormConnect,
     TodoInteraction
-    
   }
 }
 </script>
 
 <style>
+.container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  color: #ffffff;
+  padding-top: 60px;
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: darkslategrey;
 }
 </style>
