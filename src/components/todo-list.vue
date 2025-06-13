@@ -1,44 +1,63 @@
 <template>
   <div class="list-container">
+
     <ul class="todo-list">
+
       <li v-for="todo in todos" :key="todo.id" class="todo-item">
+        <!-- Loops through all the todos using v-for. -->
+        <!-- :key="todo.id" helps Vue track which item is which (important for performance). -->
         <div class="todo-content">
           <div>
             <img v-if="todo.image_path" :src="`http://localhost:3000${todo.image_path}`"
             />
           </div>
           <span v-if="!isEditing || editedTodoId !== todo.id" class="todo-text">
+            <!-- //If you're not editing, or you're editing a different todo, -->
+             <!-- show the todo's name as normal text. ||-or -->
             {{ todo.name }}
           </span>
-          <input 
-            v-else 
-            v-model="editedTodo" 
+          <input
+            v-else
+            v-model="editedTodo"
             class="todo-input"
             @keyup.enter="saveEdit(todo.id)"
           />
+          <!-- //Otherwise (if editing this todo), show an input field. -->
+          <!-- //When you press Enter, it triggers saveEdit(todo.id). -->
         </div>
+
         <div class="todo-actions">
-          <button 
-            v-if="!isEditing || editedTodoId !== todo.id" 
-            @click="startEditing(todo.id, todo.name)" 
+
+          <button
+            v-if="!isEditing || editedTodoId !== todo.id"
+            @click="startEditing(todo.id, todo.name)"
             class="action-button edit-button"
-          >
+          > 
+          <!-- //Show the Edit button if you're not editing, or editing a different item. -->
+
             Edit
           </button>
-          <button 
-            v-else 
+
+          <button
+            v-else
             @click="saveEdit(todo.id)"
             class="action-button save-button"
-          >
+          > 
+          <!-- //If you are editing this todo, show a Save button. -->
             Save
           </button>
-          <button 
-            @click="$emit('delete-todo', todo.id)" 
+
+          <button
+            @click="$emit('delete-todo', todo.id)"
             class="action-button delete-button"
-          >
+          > 
+          <!-- //Always show a Delete button. -->
+          <!-- //Clicking it emits a delete-todo event to the parent, passing the todo's ID. -->
             Delete
           </button>
+
         </div>
+
       </li>
     </ul>
   </div>
@@ -47,27 +66,30 @@
 <script>
 export default {
   props: {
-    todos: {
+    todos: { //This component receives todos from the parent.
+    //It must be an array and is required.
       type: Array,
       required: true
     }
   },
   data() {
     return {
-      isEditing: false,
-      editedTodo: '',
-      editedTodoId: null
+      isEditing: false, //True/false — whether the user is currently editing.
+      editedTodo: '', //The current input value when editing a todo.
+      editedTodoId: null //The ID of the todo being edited.
     }
   },
   methods: {
-    startEditing(id, name) {
-      this.isEditing = true;
-      this.editedTodo = name;
+    startEditing(id, name) { //Triggered when Edit is clicked.
+      this.isEditing = true; //Enables editing mode.
+      this.editedTodo = name;//Sets the current text (editedTodo)
+      // and which todo is being edited (editedTodoId).
       this.editedTodoId = id;
     },
-    saveEdit(id) {
-      if (this.editedTodo.trim()) {
-        this.$emit('edit-todo', { id, newName: this.editedTodo });
+    saveEdit(id) { //Triggered when Save is clicked or Enter is pressed.
+      if (this.editedTodo.trim()) { //If the edited text isn't empty:
+        this.$emit('edit-todo', { id, newName: this.editedTodo });//Emits edit-todo event to parent with the new data.
+        //Exits editing mode and clears input state.
         this.isEditing = false;
         this.editedTodo = '';
         this.editedTodoId = null;
@@ -193,4 +215,4 @@ export default {
     text-align: center;
   }
 }
-</style> 
+</style>

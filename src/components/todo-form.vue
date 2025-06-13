@@ -3,12 +3,12 @@
     <form @submit.prevent="submitForm" class="todo-form">
       <input 
         v-model="newTodo" 
-        placeholder="Write your task here..." 
+        placeholder="Write your todo here..." 
         class="todo-input"
       />
       <TodoImageUploader @image-selected="handleImageSelect" />
       <button type="submit" class="todo-button">
-        Add Task
+        Add Todo
       </button>
     </form>
   </div>
@@ -45,14 +45,16 @@ export default {
       if (this.selectedImage) {//If the user has selected an image, then this condition is true.
         formData.append('image', this.selectedImage)//adding selected image to the formData
       }
-      
 
         try {
           this.$emit('add-todo', formData)//This sends the formData up to the parent component(todo-interaction) using a event called add-todo.
           //Hey parent, here's the new todo + image!
+
           this.newTodo = ''
           //| clearing the input fields after submitting |
+
           this.selectedImage = null
+
         } catch (e) {
           console.error("Emit wrong")//shows error in console if something wrong
         }
