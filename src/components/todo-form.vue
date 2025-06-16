@@ -5,8 +5,15 @@
         v-model="newTodo" 
         placeholder="Write your todo here..." 
         class="todo-input"
+        maxlength="100"
       />
-      <TodoImageUploader @image-selected="handleImageSelect" />
+      <textarea  
+        v-model="description" 
+        placeholder="Description" 
+        class="todo-textarea"
+        >
+      </textarea>
+      <TodoImageUploader :key="resetKey" @image-selected="handleImageSelect" />
       <button type="submit" class="todo-button">
         Add Todo
       </button>
@@ -25,7 +32,9 @@ export default {
     return {
       //declaring variables and defining defoult values 
       newTodo: '',
-      selectedImage: null
+      selectedImage: null,
+      description: '',
+      resetKey: 0 // to force re-render
     }
   },
   methods: {
@@ -46,14 +55,17 @@ export default {
         formData.append('image', this.selectedImage)//adding selected image to the formData
       }
 
+      formData.append('description', this.description)
+
         try {
           this.$emit('add-todo', formData)//This sends the formData up to the parent component(todo-interaction) using a event called add-todo.
           //Hey parent, here's the new todo + image!
 
           this.newTodo = ''
+          this.description = ''
           //| clearing the input fields after submitting |
-
-          this.selectedImage = null
+          this.resetKey += 1
+          this.selectedImage = null  
 
         } catch (e) {
           console.error("Emit wrong")//shows error in console if something wrong
@@ -67,10 +79,12 @@ export default {
 <style scoped>
 .form-container {
   margin-bottom: 2rem;
+
 }
 
 .todo-form {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
   background: #2a2a2a;
   padding: 1.5rem;
@@ -88,6 +102,35 @@ export default {
   color: #ffffff;
   transition: all 0.3s ease;
   font-family: 'Courier New', Courier, monospace;
+  white-space: nowrap;        
+  overflow: hidden;         
+  text-overflow: ellipsis;     
+}
+
+.todo-textarea {
+  min-height: 50px;          
+  max-height: 300px;         
+  resize: vertical;        
+  overflow-y: auto;    
+  
+  padding: 1rem 1.5rem;
+  background: #333333;
+  border: 2px solid #2d5a27;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  color: #ffffff;
+  font-family: 'Courier New', Courier, monospace;
+  transition: all 0.3s ease;
+}
+
+.todo-textarea::placeholder {
+  color: #666666;
+}
+
+.todo-textarea:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.2);
 }
 
 .todo-input::placeholder {

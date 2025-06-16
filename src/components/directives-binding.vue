@@ -21,6 +21,7 @@
     methods: {
       addToItem() {
         this.items = [this.message, ...this.items]
+        this.message = ''
       }
     }
   }

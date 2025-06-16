@@ -7,21 +7,39 @@
         <!-- Loops through all the todos using v-for. -->
         <!-- :key="todo.id" helps Vue track which item is which (important for performance). -->
         <div class="todo-content">
+          
           <div>
             <img v-if="todo.image_path" :src="`http://localhost:3000${todo.image_path}`"
             />
           </div>
-          <span v-if="!isEditing || editedTodoId !== todo.id" class="todo-text">
+
+          <p v-if="!isEditing || editedTodoId !== todo.id" class="todo-text">
             <!-- //If you're not editing, or you're editing a different todo, -->
              <!-- show the todo's name as normal text. ||-or -->
             {{ todo.name }}
-          </span>
+          </p>
+
           <input
             v-else
             v-model="editedTodo"
             class="todo-input"
             @keyup.enter="saveEdit(todo.id)"
+            maxlength="100"
           />
+
+          <div v-if="!isEditing || editedTodoId !== todo.id" class="todo-text">
+            <!-- //If you're not editing, or you're editing a different todo, -->
+             <!-- show the todo's name as normal text. ||-or -->
+            {{ todo.description }}
+          </div>
+          <textarea
+            v-else
+            v-model="editedDesq"
+            class="todo-textarea"
+            @keyup.enter="saveEdit(todo.id)"
+            color="red"
+            > 
+          </textarea>
           <!-- //Otherwise (if editing this todo), show an input field. -->
           <!-- //When you press Enter, it triggers saveEdit(todo.id). -->
         </div>
@@ -30,7 +48,7 @@
 
           <button
             v-if="!isEditing || editedTodoId !== todo.id"
-            @click="startEditing(todo.id, todo.name)"
+            @click="startEditing(todo.id, todo.name, todo.description)"
             class="action-button edit-button"
           > 
           <!-- //Show the Edit button if you're not editing, or editing a different item. -->
@@ -75,23 +93,26 @@ export default {
   data() {
     return {
       isEditing: false, //True/false — whether the user is currently editing.
-      editedTodo: '', //The current input value when editing a todo.
+      editedTodo: '',
+      editedDesq: '', //The current input value when editing a todo.
       editedTodoId: null //The ID of the todo being edited.
     }
   },
   methods: {
-    startEditing(id, name) { //Triggered when Edit is clicked.
+    startEditing(id, name, description) { //Triggered when Edit is clicked.
       this.isEditing = true; //Enables editing mode.
-      this.editedTodo = name;//Sets the current text (editedTodo)
+      this.editedTodo = name ;//Sets the current text (editedTodo)
+      this.editedDesq = description;
       // and which todo is being edited (editedTodoId).
       this.editedTodoId = id;
     },
     saveEdit(id) { //Triggered when Save is clicked or Enter is pressed.
       if (this.editedTodo.trim()) { //If the edited text isn't empty:
-        this.$emit('edit-todo', { id, newName: this.editedTodo });//Emits edit-todo event to parent with the new data.
+        this.$emit('edit-todo', { id, newName: this.editedTodo, newDesq: this.editedDesq });//Emits edit-todo event to parent with the new data.
         //Exits editing mode and clears input state.
         this.isEditing = false;
         this.editedTodo = '';
+        this.editedDesq = '';
         this.editedTodoId = null;
       }
     }
@@ -115,6 +136,7 @@ export default {
 
 .todo-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: space-between;
   padding: 1.2rem;
@@ -129,7 +151,9 @@ export default {
 }
 
 .todo-content {
-  flex: 1;
+  /* flex: 1; */
+  display: flex;
+  flex-direction: column;
   margin-right: 1rem;
 }
 
@@ -139,18 +163,50 @@ export default {
   display: block;
   padding: 0.5rem;
   font-family: 'Courier New', Courier, monospace;
+  word-wrap: break-word;   
+  white-space: normal;     
 }
 
 .todo-input {
-  width: 100%;
+  /* width: 100%; */
   padding: 0.8rem 1rem;
   background: #333333;
-  border: 2px solid #4CAF50;
+  border: 2px solid #2d5a27;
   border-radius: 25px;
   font-size: 1.1rem;
   color: #ffffff;
   font-family: 'Courier New', Courier, monospace;
+  white-space: nowrap;        
+  overflow: hidden;           
+  text-overflow: ellipsis;
 }
+
+.todo-textarea {
+  min-height: 80px;         
+  max-height: 300px;       
+  resize: vertical;          
+  overflow-y: auto;         
+  
+  padding: 1rem 1.5rem;
+  background: #333333;
+  border: 2px solid #2d5a27;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  color: #ffffff;
+  font-family: 'Courier New', Courier, monospace;
+  transition: all 0.3s ease;
+}
+
+.todo-textarea::placeholder {
+  color: #666666;
+}
+
+.todo-textarea:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.2);
+}
+
 
 .todo-actions {
   display: flex;

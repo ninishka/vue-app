@@ -27,6 +27,7 @@ export default {
     }
   },
   methods: {
+
     async fetchTodos() { //Declares an asynchronous method
       try {
         const response = await fetch('http://localhost:3000/todos');//Makes a GET request to backend at /todos
@@ -38,9 +39,9 @@ export default {
         console.error('Error:', error);
       }
     },
+
     async addTodo(formData) {
       try {
-        console.log('formData', formData)
         const response = await fetch('http://localhost:3000/todo', {
           method: 'POST',//Sets the HTTP method to POST (to create a new resource).
            // // headers: { 'Content-Type': 'application/json' },// No Content-Type header is added here, 
@@ -55,37 +56,41 @@ export default {
         console.error('Error:', error);
       }
     },
-    async editTodo({ id, newName }) { // Uses object destructuring to pull out id and newName from the argument.
+
+    async editTodo({ id, newName, newDesq }) { // Uses object destructuring to pull out id and newName from the argument.
       try {
-        const response = await fetch(`http://localhost:3000/todo/${id}`, { //Sends a PUT request to /todo/{id} — updating a specific todo by its ID.
+        await fetch(`http://localhost:3000/todo/${id}`, { //Sends a PUT request to /todo/{id} — updating a specific todo by its ID.
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },// Sets header to indicate we're sending JSON, not FormData.
-          body: JSON.stringify({ data: newName }) //Converts an object { data: newName } to a JSON string to send as the body.
+          body: JSON.stringify({ data: {name: newName, description: newDesq},  }) //Converts an object { data: newName } to a JSON string to send as the body.
         });
         
-        const updatedTodo = await response.json();
-        const index = this.todos.findIndex(t => t.id === id);
-        //"Only update the todo if it actually exists in the array."
-        if (index !== -1) {//This checks:Did findIndex() actually find the item?
-          //If it did, the index will be 0, 1, 2, etc.
-         //If it didn't, the index will be -1.
-          this.todos[index] = updatedTodo;
-          //replaces the old todo object in the array with the new one returned from the backend.
-        }
+        // const updatedTodo = await response.json();
+        // const index = this.todos.findIndex(t => t.id === id);
+        // //"Only update the todo if it actually exists in the array."
+        // if (index !== -1) {//This checks:Did findIndex() actually find the item?
+        //   //If it did, the index will be 0, 1, 2, etc.
+        //  //If it didn't, the index will be -1.
+        //   this.todos[index] = updatedTodo;
+        //   //replaces the old todo object in the array with the new one returned from the backend.
+        // }
+        this.fetchTodos()
       } catch (error) {
         console.error('Error editing todo:', error);
       }
     },
+    
     async deleteTodo(id) {
       try {
         await fetch(`http://localhost:3000/todo/${id}`, {
           method: 'DELETE'
         });
-        this.todos = this.todos.filter(todo => todo.id !== id);
+        // this.todos = this.todos.filter(todo => todo.id !== id);
+        this.fetchTodos();
       } catch (error) {
         console.error('Error:', error);
       }
-    }
+    },
   },
   mounted() {
     this.fetchTodos();
@@ -95,7 +100,7 @@ export default {
 
 <style scoped>
 .todo-container {
-  max-width: 800px;
+  width: 50%;
   margin: 0px 172px;
   padding: 2rem;
   background: #1a1a1a;
@@ -104,6 +109,7 @@ export default {
   border: 2px solid #2d5a27;
   position: relative;
   overflow: hidden;
+
 }
 
 .todo-container::before {

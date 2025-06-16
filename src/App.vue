@@ -1,23 +1,23 @@
 <template>
   <div class="container">
-    <div class="left-column">
+    <!-- <div class="left-column">
       <ButtonChangeText />
       <DirectivesBinding />
-    </div>
+    </div> -->
     <TodoInteraction />
   </div>
 </template>
 
 <script>
-import ButtonChangeText from './components/button-change-text.vue'
-import DirectivesBinding from './components/directives-binding.vue'
+// import ButtonChangeText from './components/button-change-text.vue'
+// import DirectivesBinding from './components/directives-binding.vue'
 import TodoInteraction from './components/todo-interaction.vue'
 
 export default {
   name: 'App',
   components: {
-    ButtonChangeText,
-    DirectivesBinding,
+    // ButtonChangeText,
+    // DirectivesBinding,
     TodoInteraction
   }
 }
