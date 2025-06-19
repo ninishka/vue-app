@@ -47,6 +47,13 @@
         <div class="todo-actions">
 
           <button
+            @click="viewDetails(todo.id)"
+            class="action-button view-button"
+          >
+            View Details
+          </button>
+
+          <button
             v-if="!isEditing || editedTodoId !== todo.id"
             @click="startEditing(todo.id, todo.name, todo.description)"
             class="action-button edit-button"
@@ -99,6 +106,10 @@ export default {
     }
   },
   methods: {
+    viewDetails(todoId) {
+      // Emit event to parent to navigate to todo detail page
+      this.$emit('view-todo', todoId)
+    },
     startEditing(id, name, description) { //Triggered when Edit is clicked.
       this.isEditing = true; //Enables editing mode.
       this.editedTodo = name ;//Sets the current text (editedTodo)
@@ -234,6 +245,16 @@ export default {
 
 .edit-button:hover {
   background: rgba(76, 175, 80, 0.1);
+}
+
+.view-button {
+  background: transparent;
+  color: #2196F3;
+  border: 2px solid #2196F3;
+}
+
+.view-button:hover {
+  background: rgba(33, 150, 243, 0.1);
 }
 
 .save-button {

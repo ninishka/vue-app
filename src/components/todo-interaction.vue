@@ -7,6 +7,7 @@
         :todos="todos"
         @edit-todo="editTodo"
         @delete-todo="deleteTodo"
+        @view-todo="viewTodo"
       />
     </div>
   </div>
@@ -15,6 +16,8 @@
 <script>
 import TodoForm from './todo-form.vue'
 import TodoList from './todo-list.vue'
+import { deleteTodo } from '@/api/todoService'
+
 
 export default {
   components: {
@@ -23,7 +26,7 @@ export default {
   },
   data() {
     return {
-      todos: []
+      todos: []///compos--const todos = ref([])
     }
   },
   methods: {
@@ -39,6 +42,15 @@ export default {
         console.error('Error:', error);
       }
     },
+    //compos>
+    // const fetchTodos = async () => {
+    //   try {
+    //     const response = await fetch('http://localhost:3000/todos')
+    //     todos.value = await response.json()
+    //   } catch (error) {
+    //     console.error('Error fetching todos:', error)
+    //   }
+    // }
 
     async addTodo(formData) {
       try {
@@ -81,20 +93,29 @@ export default {
     },
     
     async deleteTodo(id) {
-      try {
-        await fetch(`http://localhost:3000/todo/${id}`, {
-          method: 'DELETE'
-        });
-        // this.todos = this.todos.filter(todo => todo.id !== id);
-        this.fetchTodos();
-      } catch (error) {
-        console.error('Error:', error);
-      }
+
+
+    if (!confirm('Are you sure you want to delete this todo?')) return;
+    try {
+      await deleteTodo(id);
+      this.fetchTodos();
+      alert('Todo deleted successfully');
+    } catch (error) {
+      alert('Failed to delete todo');
+    }
+    },
+
+    
+
+    viewTodo(todoId) {
+      // Emit event to parent view to navigate to todo details
+      this.$emit('todo-selected', todoId)
     },
   },
   mounted() {
     this.fetchTodos();
   }
+  //onMounted(fetchTodos)
 }
 </script>
 
