@@ -65,7 +65,8 @@
 </template>
 
 <script>
-import { deleteTodo } from '@/api/todoService'
+import { mapGetters, mapActions } from 'vuex'
+
 export default {
   name: 'TodoDetailPage',
 
@@ -80,20 +81,199 @@ export default {
     }
   },//<= That all means: this.id 
 
+  // BEFORE VUEX: We had local state here
+  // data() {//component's internal state
+  //   return {
+  //     todo: null, //todo holds the fetched item
+  //     loading: true,//loading is for spinner logic
+  //     error: null
+  //   }
+  // },
 
-  data() {//component's internal state
-    return {
-      todo: null, //todo holds the fetched item
-      loading: true,//loading is for spinner logic
-      error: null
+  computed: {
+    ...mapGetters('todos', [
+      'currentTodo',
+      'isLoading',
+      'hasError'
+    ]),
+    
+    // Use currentTodo from store, fallback to local computed
+    todo() {
+      return this.currentTodo
+    },
+    
+    loading() {
+      return this.isLoading
+    },
+    
+    error() {
+      return this.hasError
     }
   },
 
+  methods: {
+    ...mapActions('todos', [
+      'fetchTodoById',
+      'toggleTodoComplete',
+      'clearError'
+    ]),
+    
+    ...mapActions('todos', {
+      deleteTodoAction: 'deleteTodo'
+    }),
 
-  mounted() { //fetch the todo when page loads
-    this.fetchTodo() 
+    async fetchTodo() {
+      // BEFORE VUEX: Direct API fetch —fetches the todo from backend
+      // this.loading = true
+      // this.error = null
+      // 
+      // try {
+      //   const response = await fetch(`http://localhost:3000/api/todos/${this.id}`)
+      //   
+      //   if (!response.ok) {
+      //     throw new Error(`Todo not found (${response.status})`)
+      //   }
+      //   
+      //   this.todo = await response.json()
+      // } catch (error) {
+      //   console.error('Error fetching todo:', error)
+      //   this.error = error.message
+      // } finally {
+      //   this.loading = false
+      // }
+      
+      // NOW WITH VUEX: Use action
+      try {
+        await this.fetchTodoById(this.id)
+      } catch (error) {
+        console.error('Error fetching todo:', error)
+      }
+    },
+    
+    async toggleComplete() {
+      // BEFORE VUEX: Two different approaches were shown in comments
+      // // async toggleComplete() { //toggles completed status
+      // //   try {
+      // //     const response = await fetch(`http://localhost:3000/todo/${this.id}`, {
+      // //       method: 'PUT',
+      // //       headers: {
+      // //         'Content-Type': 'application/json',
+      // //       },
+      // //       body: JSON.stringify({
+      // //         ...this.todo,
+      // //         completed: !this.todo.completed
+      // //       })
+      // //     })
+      // //     
+      // //     if (response.ok) {
+      // //       this.todo.completed = !this.todo.completed
+      // //     } else {
+      // //       throw new Error('Failed to update todo')
+      // //     }
+      // //   } catch (error) {
+      // //     console.error('Error updating todo:', error)
+      // //     alert('Failed to update todo')
+      // //   }
+      // // },
+
+      // BEFORE VUEX: The working version was:
+      // try {
+      //   const response = await fetch(`http://localhost:3000/todo/${this.id}`, {
+      //     method: 'PUT',
+      //     headers: {
+      //       'Content-Type': 'application/json',
+      //     },
+      //     body: JSON.stringify({
+      //       data: {
+      //         name: this.todo.name,
+      //         description: this.todo.description,
+      //         completed: !this.todo.completed
+      //       }
+      //     })
+      //   })
+      //
+      //   if (response.ok) {
+      //     this.todo.completed = !this.todo.completed
+      //   } else {
+      //     throw new Error('Failed to update todo')
+      //   }
+      // } catch (error) {
+      //   console.error('Error updating todo:', error)
+      //   alert('Failed to update todo')
+      // }
+      
+      // NOW WITH VUEX: Use action
+      try {
+        await this.toggleTodoComplete(parseInt(this.id))
+      } catch (error) {
+        console.error('Error updating todo:', error)
+        alert('Failed to update todo')
+      }
+    },
+
+    async deleteTodo() {
+      if (!confirm('Are you sure you want to delete this todo?')) return
+
+      // BEFORE VUEX: Import and direct call
+      // import { deleteTodo } from '@/api/todoService'
+      // try {
+      //   await deleteTodo(this.id);
+      //   alert('Todo deleted successfully');
+      //   this.$router.push('/todos'); // navigate back to list
+      // } catch (error) {
+      //   alert('Failed to delete todo');
+      // }
+      
+      // NOW WITH VUEX: Use action
+      try {
+        await this.deleteTodoAction(parseInt(this.id))
+        alert('Todo deleted successfully')
+        this.$router.push('/todos')
+      } catch (error) {
+        alert('Failed to delete todo')
+      }
+    },
+    
+    editTodo() {
+      // (FOR NOW ONLY)redirects to /todos
+      // For now, just go back to the list where editing can happen
+      // In a real app, you might have a separate edit page
+      this.$router.push('/todos')
+    },
+    
+    goBack() {
+      // same as edit — goes back to list
+      this.$router.push('/todos')
+    },
+    
+    formatDate(dateString) {
+      //formats timestamps
+      if (!dateString) return 'N/A'
+      // BEFORE: More detailed formatting
+      // return new Date(dateString).toLocaleDateString('en-US', {
+      //   year: 'numeric',
+      //   month: 'long',
+      //   day: 'numeric',
+      //   hour: '2-digit',
+      //   minute: '2-digit'
+      // })
+      return new Date(dateString).toLocaleString()
+    },
+    
+    getImageUrl(imagePath) {
+      // builds a URL to show image NOT WORKING -> FIXED
+      // BEFORE: return `http://localhost:3000/${imagePath}`
+      if (!imagePath) return ''
+      return `http://localhost:3000${imagePath}`
+    }
   },
 
+  // BEFORE VUEX: mounted() { //fetch the todo when page loads
+  //   this.fetchTodo() 
+  // },
+  async mounted() {
+    await this.fetchTodo()
+  },
 
   //Route Watching
   watch: { //This lets the component react to route changes.
@@ -103,122 +283,11 @@ export default {
     //FE
     //User is on /todos/5, then navigates to /todos/6 without leaving the page.
     //This watch ensures fetchTodo() runs again when id changes.
-  },
-
-
-  methods: {
-    async fetchTodo() { //fetches the todo from backend
-      this.loading = true
-      this.error = null
-      
-      try {
-        const response = await fetch(`http://localhost:3000/api/todos/${this.id}`)
-        
-        if (!response.ok) {
-          throw new Error(`Todo not found (${response.status})`)
-        }
-        
-        this.todo = await response.json()
-      } catch (error) {
-        console.error('Error fetching todo:', error)
-        this.error = error.message
-      } finally {
-        this.loading = false
-      }
-    },
-    
-    // async toggleComplete() { //toggles completed status
-    //   try {
-    //     const response = await fetch(`http://localhost:3000/todo/${this.id}`, {
-    //       method: 'PUT',
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //       },
-    //       body: JSON.stringify({
-    //         ...this.todo,
-    //         completed: !this.todo.completed
-    //       })
-    //     })
-        
-    //     if (response.ok) {
-    //       this.todo.completed = !this.todo.completed
-    //     } else {
-    //       throw new Error('Failed to update todo')
-    //     }
-    //   } catch (error) {
-    //     console.error('Error updating todo:', error)
-    //     alert('Failed to update todo')
-    //   }
-    // },
-
-    async toggleComplete() {
-      try {
-        const response = await fetch(`http://localhost:3000/todo/${this.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            data: {
-              name: this.todo.name,
-              description: this.todo.description,
-              completed: !this.todo.completed
-            }
-          })
-        })
-
-        if (response.ok) {
-          this.todo.completed = !this.todo.completed
-        } else {
-          throw new Error('Failed to update todo')
-        }
-      } catch (error) {
-        console.error('Error updating todo:', error)
-        alert('Failed to update todo')
-      }
-    },
-
-    async deleteTodo() {
-      if (!confirm('Are you sure you want to delete this todo?')) return;
-
-      try {
-        await deleteTodo(this.id);
-        alert('Todo deleted successfully');
-        this.$router.push('/todos'); // navigate back to list
-      } catch (error) {
-        alert('Failed to delete todo');
-      }
-    },
-    
-    editTodo() {//(FOR NOW ONLY)redirects to /todos
-      // For now, just go back to the list where editing can happen
-      // In a real app, you might have a separate edit page
-      this.$router.push('/todos')
-    },
-    
-    goBack() { //same as edit — goes back to list
-      this.$router.push('/todos')
-    },
-    
-    getImageUrl(imagePath) { // builds a URL to show image NOT WORKING
-      return `http://localhost:3000/${imagePath}`
-    },
-    
-    formatDate(dateString) { //formats timestamps
-      if (!dateString) return 'N/A'
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    }
   }
 }
 </script>
 
-<!-- | Concept                   | How It’s Used                                         |
+<!-- | Concept                   | How It's Used                                         |
 | ------------------------- | ----------------------------------------------------- |
 | **Dynamic Route**         | `/todos/:id` – shows detail based on `id` param       |
 | **Props from Route**      | `props: true` – passes `id` as a prop                 |

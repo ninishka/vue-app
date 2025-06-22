@@ -1,10 +1,22 @@
 <template>
   <div class="todo-container">
     <h1 class="todo-title">Tasks</h1>
+    
+    <!-- Error display -->
+    <div v-if="hasError" class="error-message">
+      <p>{{ hasError }}</p>
+      <button @click="clearError" class="retry-btn">Clear Error</button>
+    </div>
+    
+    <!-- Loading indicator -->
+    <div v-if="isLoading" class="loading">
+      <p>Loading...</p>
+    </div>
+    
     <div class="todo-content">
       <TodoForm @add-todo="addTodo" />
       <TodoList 
-        :todos="todos"
+        :todos="allTodos"
         @edit-todo="editTodo"
         @delete-todo="deleteTodo"
         @view-todo="viewTodo"
@@ -14,34 +26,57 @@
 </template>
 
 <script>
+import { mapGetters, mapActions } from 'vuex'
 import TodoForm from './todo-form.vue'
 import TodoList from './todo-list.vue'
-import { deleteTodo } from '@/api/todoService'
-
 
 export default {
   components: {
     TodoForm,
     TodoList
   },
-  data() {
-    return {
-      todos: []///compos--const todos = ref([])
-    }
+  
+  // BEFORE VUEX: We had local state here
+  // data() {
+  //   return {
+  //     todos: [] ///compos--const todos = ref([])
+  //   }
+  // },
+  
+  computed: {
+    // Map Vuex getters to component computed properties
+    ...mapGetters('todos', [
+      'allTodos',
+      'isLoading',
+      'hasError'
+    ])
   },
+  
   methods: {
+    // Map Vuex actions to component methods
+    ...mapActions('todos', [
+      'fetchTodos',
+      'createTodo',
+      'updateTodo',
+      'clearError'
+    ]),
+    
+    ...mapActions('todos', {
+      deleteTodoAction: 'deleteTodo'
+    }),
 
-    async fetchTodos() { //Declares an asynchronous method
-      try {
-        const response = await fetch('http://localhost:3000/todos');//Makes a GET request to backend at /todos
-        //tells JavaScript to wait until it gets a response.
-        //The result is saved into response.
-        this.todos = await response.json();//Waits for the response body to be converted from -
-        // -JSON text to a JavaScript object (an array of todos). Then assigns that array to this.todos.
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    },
+    // BEFORE VUEX: Direct API fetch method
+    // async fetchTodos() { //Declares an asynchronous method
+    //   try {
+    //     const response = await fetch('http://localhost:3000/todos');//Makes a GET request to backend at /todos
+    //     //tells JavaScript to wait until it gets a response.
+    //     //The result is saved into response.
+    //     this.todos = await response.json();//Waits for the response body to be converted from -
+    //     // -JSON text to a JavaScript object (an array of todos). Then assigns that array to this.todos.
+    //   } catch (error) {
+    //     console.error('Error:', error);
+    //   }
+    // },
     //compos>
     // const fetchTodos = async () => {
     //   try {
@@ -53,67 +88,102 @@ export default {
     // }
 
     async addTodo(formData) {
+      // BEFORE VUEX: Direct API call
+      // try {
+      //   const response = await fetch('http://localhost:3000/todo', {
+      //     method: 'POST',//Sets the HTTP method to POST (to create a new resource).
+      //      // // headers: { 'Content-Type': 'application/json' },// No Content-Type header is added here, 
+      //       // because the browser sets it automatically when sending FormData.
+      //     body: formData
+      //    //Sends the actual form data — this can include text and a file.
+      //   });
+      //   const result = await response.json();//Waits for the backend to respond with JSON — probably the created todo with its ID and maybe image URL.
+      //   //Assigns that to the result.
+      //   this.todos.push(result);//Adds the new todo to the local todos array — immediately updates the UI.
+      // } catch (error) {
+      //   console.error('Error:', error);
+      // }
+      
+      // NOW WITH VUEX: Use action
       try {
-        const response = await fetch('http://localhost:3000/todo', {
-          method: 'POST',//Sets the HTTP method to POST (to create a new resource).
-           // // headers: { 'Content-Type': 'application/json' },// No Content-Type header is added here, 
-            // because the browser sets it automatically when sending FormData.
-          body: formData
-         //Sends the actual form data — this can include text and a file.
-        });
-        const result = await response.json();//Waits for the backend to respond with JSON — probably the created todo with its ID and maybe image URL.
-        //Assigns that to the result.
-        this.todos.push(result);//Adds the new todo to the local todos array — immediately updates the UI.
+        await this.createTodo(formData)
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error adding todo:', error)
       }
     },
 
-    async editTodo({ id, newName, newDesq }) { // Uses object destructuring to pull out id and newName from the argument.
+    async editTodo({ id, newName, newDesq }) {
+      // BEFORE VUEX: Direct API call with manual state update
+      // try {
+      //   await fetch(`http://localhost:3000/todo/${id}`, { //Sends a PUT request to /todo/{id} — updating a specific todo by its ID.
+      //     method: 'PUT',
+      //     headers: { 'Content-Type': 'application/json' },// Sets header to indicate we're sending JSON, not FormData.
+      //     body: JSON.stringify({ data: {name: newName, description: newDesq},  }) //Converts an object { data: newName } to a JSON string to send as the body.
+      //   });
+      //   
+      //   // const updatedTodo = await response.json();
+      //   // const index = this.todos.findIndex(t => t.id === id);
+      //   // //"Only update the todo if it actually exists in the array."
+      //   // if (index !== -1) {//This checks:Did findIndex() actually find the item?
+      //   //   //If it did, the index will be 0, 1, 2, etc.
+      //   //  //If it didn't, the index will be -1.
+      //   //   this.todos[index] = updatedTodo;
+      //   //   //replaces the old todo object in the array with the new one returned from the backend.
+      //   // }
+      //   this.fetchTodos()
+      // } catch (error) {
+      //   console.error('Error editing todo:', error);
+      // }
+      
+      // NOW WITH VUEX: Uses object destructuring to pull out id and newName from the argument.
       try {
-        await fetch(`http://localhost:3000/todo/${id}`, { //Sends a PUT request to /todo/{id} — updating a specific todo by its ID.
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },// Sets header to indicate we're sending JSON, not FormData.
-          body: JSON.stringify({ data: {name: newName, description: newDesq},  }) //Converts an object { data: newName } to a JSON string to send as the body.
-        });
-        
-        // const updatedTodo = await response.json();
-        // const index = this.todos.findIndex(t => t.id === id);
-        // //"Only update the todo if it actually exists in the array."
-        // if (index !== -1) {//This checks:Did findIndex() actually find the item?
-        //   //If it did, the index will be 0, 1, 2, etc.
-        //  //If it didn't, the index will be -1.
-        //   this.todos[index] = updatedTodo;
-        //   //replaces the old todo object in the array with the new one returned from the backend.
-        // }
-        this.fetchTodos()
+        const data = {
+          name: newName,
+          description: newDesq
+        }
+        await this.updateTodo({ id, data })
       } catch (error) {
-        console.error('Error editing todo:', error);
+        console.error('Error editing todo:', error)
       }
     },
-    
+
     async deleteTodo(id) {
-
-
-    if (!confirm('Are you sure you want to delete this todo?')) return;
-    try {
-      await deleteTodo(id);
-      this.fetchTodos();
-      alert('Todo deleted successfully');
-    } catch (error) {
-      alert('Failed to delete todo');
-    }
+      if (!confirm('Are you sure you want to delete this todo?')) return
+      
+      // BEFORE VUEX: Direct API call with manual state refresh
+      // try {
+      //   await deleteTodo(id);
+      //   this.fetchTodos();
+      //   alert('Todo deleted successfully');
+      // } catch (error) {
+      //   alert('Failed to delete todo');
+      // }
+      
+      // NOW WITH VUEX: Use action
+      try {
+        await this.deleteTodoAction(id)
+        alert('Todo deleted successfully')
+      } catch (error) {
+        alert('Failed to delete todo')
+      }
     },
-
-    
 
     viewTodo(todoId) {
       // Emit event to parent view to navigate to todo details
       this.$emit('todo-selected', todoId)
-    },
+    }
   },
-  mounted() {
-    this.fetchTodos();
+  
+  async mounted() {
+    // BEFORE VUEX: Direct method call
+    // this.fetchTodos();
+    
+    // NOW WITH VUEX: Use action
+    try {
+      await this.fetchTodos()
+    } catch (error) {
+      console.error('Error fetching todos:', error)
+    }
   }
   //onMounted(fetchTodos)
 }
@@ -163,6 +233,36 @@ export default {
   border: 1px solid #2d5a27;
   position: relative;
   z-index: 1;
+}
+
+.error-message {
+  background: #d32f2f;
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.retry-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.retry-btn:hover {
+  background: #d32f2f;
+}
+
+.loading {
+  text-align: center;
+  color: #4CAF50;
+  font-size: 1.2rem;
+  margin: 2rem 0;
 }
 
 @media (max-width: 768px) {
