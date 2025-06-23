@@ -49,6 +49,10 @@ export default {
       'allTodos',
       'isLoading',
       'hasError'
+    ]),
+    
+    ...mapGetters('auth', [
+      'isAuthenticated'
     ])
   },
   
@@ -88,27 +92,22 @@ export default {
     // }
 
     async addTodo(formData) {
-      // BEFORE VUEX: Direct API call
-      // try {
-      //   const response = await fetch('http://localhost:3000/todo', {
-      //     method: 'POST',//Sets the HTTP method to POST (to create a new resource).
-      //      // // headers: { 'Content-Type': 'application/json' },// No Content-Type header is added here, 
-      //       // because the browser sets it automatically when sending FormData.
-      //     body: formData
-      //    //Sends the actual form data — this can include text and a file.
-      //   });
-      //   const result = await response.json();//Waits for the backend to respond with JSON — probably the created todo with its ID and maybe image URL.
-      //   //Assigns that to the result.
-      //   this.todos.push(result);//Adds the new todo to the local todos array — immediately updates the UI.
-      // } catch (error) {
-      //   console.error('Error:', error);
-      // }
-      
       // NOW WITH VUEX: Use action
       try {
         await this.createTodo(formData)
+        
+        // Increment guest count if not authenticated
+        if (!this.isAuthenticated) {
+          this.$store.dispatch('auth/incrementGuestCount')
+        }
       } catch (error) {
         console.error('Error adding todo:', error)
+        
+        // Handle guest limit reached
+        if (error.guestLimitReached) {
+          // The error message will be shown by the error handling in the store
+          // The guest warning component will automatically show
+        }
       }
     },
 
@@ -181,10 +180,10 @@ export default {
     // NOW WITH VUEX: Use action
     try {
       await this.fetchTodos()
-    } catch (error) {
+      } catch (error) {
       console.error('Error fetching todos:', error)
+      }
     }
-  }
   //onMounted(fetchTodos)
 }
 </script>
@@ -269,7 +268,7 @@ export default {
   .todo-container {
     margin: 1rem;
     padding: 1rem;
-  }
+}
 
   .todo-title {
     font-size: 2.5rem;
