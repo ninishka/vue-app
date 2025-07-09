@@ -4,6 +4,22 @@
       <h1 class="title">Todo Application</h1>
       <p class="subtitle">Manage your tasks efficiently</p>
       
+      <!-- User Status Section -->
+      <div class="user-status">
+        <div v-if="isAuthenticated" class="auth-status authenticated">
+          <p>Welcome back, <strong>{{ currentUser.username }}</strong>!</p>
+          <p>You have unlimited todo access.</p>
+        </div>
+        <div v-else class="auth-status guest">
+          <p>You're browsing as a <strong>guest</strong></p>
+          <p>Create up to {{ guestRemaining }}/{{ guestLimit }} todos without an account</p>
+          <div class="auth-actions">
+            <router-link to="/signup" class="auth-btn primary">Sign Up Free</router-link>
+            <router-link to="/login" class="auth-btn secondary">Login</router-link>
+          </div>
+        </div>
+      </div>
+      
       <!-- Statistics Section -->
       <div class="stats-section" v-if="todosLoaded">
         <div class="stat-card">
@@ -22,8 +38,8 @@
       
       <div class="navigation-cards">
         <div class="nav-card" @click="goToTodos">
-          <h3>View All Todos</h3>
-          <p>See all your tasks and manage them</p>
+          <h3>{{ isAuthenticated ? 'Manage Your Todos' : 'Try Creating Todos' }}</h3>
+          <p>{{ isAuthenticated ? 'See all your tasks and manage them' : 'Create up to 3 todos as a guest' }}</p>
           <button class="nav-button">Go to Todos</button>
         </div>
       </div>
@@ -43,6 +59,13 @@ export default {
       'completedCount',
       'pendingCount',
       'allTodos'
+    ]),
+    
+    ...mapGetters('auth', [
+      'isAuthenticated',
+      'currentUser',
+      'guestLimit',
+      'guestRemaining'
     ]),
     
     todosLoaded() {
@@ -97,6 +120,63 @@ export default {
   font-size: 1.2rem;
   color: #81C784;
   margin-bottom: 3rem;
+}
+
+.user-status {
+  margin-bottom: 3rem;
+}
+
+.auth-status {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid #4CAF50;
+  border-radius: 10px;
+  padding: 1.5rem;
+  min-width: 120px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.auth-status:hover {
+  background: rgba(76, 175, 80, 0.2);
+  transform: translateY(-2px);
+}
+
+.auth-status p {
+  font-family: 'Courier New', monospace;
+  color: #81C784;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.auth-status strong {
+  font-family: 'Courier New', monospace;
+  color: #4CAF50;
+  font-size: 1.2rem;
+  margin-left: 0.5rem;
+}
+
+.auth-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.auth-btn {
+  background: linear-gradient(45deg, #4CAF50, #66BB6A);
+  color: white;
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.auth-btn:hover {
+  background: linear-gradient(45deg, #66BB6A, #4CAF50);
+  transform: scale(1.05);
 }
 
 .stats-section {
